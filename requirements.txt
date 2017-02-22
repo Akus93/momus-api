@@ -1,0 +1,5 @@
+Django==1.10.5
+django-filter==1.0.1
+django-rest-auth==0.9.0
+djangorestframework==3.5.4
+six==1.10.0
