@@ -3,10 +3,12 @@ from rest_framework.views import APIView, Response
 from rest_framework.generics import RetrieveAPIView
 from rest_framework.viewsets import ReadOnlyModelViewSet, ModelViewSet
 from rest_framework.permissions import IsAuthenticated
+from django_filters.rest_framework import DjangoFilterBackend
 
 from momus.permissions import IsOwnerOrReadOnlyForPost, IsOwnerOrReadOnlyForUserProfile
 from momus.serializers import UserProfileSerializer, PostSerializer
 from momus.models import UserProfile, Post
+from momus.filters import PostFilterSet
 
 
 class UserProfileViewSet(ModelViewSet):
@@ -24,6 +26,8 @@ class PostViewSet(ModelViewSet):
     permission_classes = (IsOwnerOrReadOnlyForPost, )
     http_method_names = ('get', 'options', 'post', 'head', 'delete')
     lookup_field = 'slug'
+    filter_backends = (DjangoFilterBackend,)
+    filter_class = PostFilterSet
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user.userprofile)

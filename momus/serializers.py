@@ -27,12 +27,13 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('username', 'firstName', 'lastName', 'email')
-        read_only_fields = ('email', )
+        read_only_fields = ('email', 'username')
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
     user = UserSerializer()
     birthDate = serializers.DateField(source='birth_date', allow_null=True, read_only=True)
+    photo = ImageBase64Field()
 
     class Meta:
         model = UserProfile
