@@ -73,7 +73,7 @@ WSGI_APPLICATION = 'momus_api.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'momus',
         'USER': 'akus',
         'PASSWORD': '12345678',
