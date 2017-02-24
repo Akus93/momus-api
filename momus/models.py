@@ -34,6 +34,7 @@ class Post(models.Model):
     class Meta:
         verbose_name = 'Post'
         verbose_name_plural = 'Posty'
+        ordering = ['-create_date']
 
 
 class Favorite(models.Model):
@@ -50,12 +51,14 @@ class Favorite(models.Model):
 class Comment(models.Model):
     author = models.ForeignKey(UserProfile, verbose_name='Autor', related_name='author')
     post = models.ForeignKey(Post, verbose_name='Post')
+    parent = models.ForeignKey('self', verbose_name='Rodzic', null=True, default=None)
     text = models.CharField(verbose_name='Tekst', max_length=255)
+    rate = models.SmallIntegerField(verbose_name='Ocena', default=0)
     is_active = models.BooleanField(verbose_name='Czy aktywny', default=True)
     create_date = models.DateTimeField(auto_now_add=True, verbose_name='Data utworzenia')
 
     def __str__(self):
-        return 'Komentarz {} o {}'.format(self.author, self.teacher)
+        return 'Komentarz {} o {}'.format(self.author, self.post)
 
     class Meta:
         verbose_name = 'Komentarz'

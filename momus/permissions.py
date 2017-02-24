@@ -18,3 +18,21 @@ class IsOwnerOrReadOnlyForUserProfile(BasePermission):
 
     def has_permission(self, request, view):
         return request.method in SAFE_METHODS or request.user and is_authenticated(request.user)
+
+
+class IsOwnerForFavorite(BasePermission):
+
+    def has_object_permission(self, request, view, obj):
+        return obj.user == request.user.userprofile
+
+    def has_permission(self, request, view):
+        return request.user and is_authenticated(request.user)
+
+
+class IsOwnerOrReadOnlyForComment(BasePermission):
+
+    def has_object_permission(self, request, view, obj):
+        return request.method in SAFE_METHODS or obj.author == request.user.userprofile
+
+    def has_permission(self, request, view):
+        return request.method in SAFE_METHODS or request.user and is_authenticated(request.user)

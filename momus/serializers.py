@@ -7,7 +7,7 @@ from django.utils.text import slugify
 
 from rest_framework import serializers
 
-from momus.models import UserProfile, Post
+from momus.models import UserProfile, Post, Favorite, Comment
 
 
 class ImageBase64Field(serializers.ImageField):
@@ -81,3 +81,33 @@ class PostSerializer(serializers.ModelSerializer):
             slug = slugify('{}-{}'.format(validated_data['title'], str(number)))
         validated_data['slug'] = slug
         return super(PostSerializer, self).create(validated_data)
+
+
+class FavoriteSerializer(serializers.ModelSerializer):
+    post = PostSerializer(read_only=True)
+    post_slug = serializers.SlugRelatedField(queryset=Post.objects.all(), slug_field='slug', write_only=True)
+
+    class Meta:
+        model = Favorite
+        fields = ('post', 'create_date', 'post_slug')
+        read_only_fields = ('create_date',)
+
+    def create(self, validated_data):
+        post_slug = validated_data.pop('post_slug')
+        user_profile = validated_data['user']
+        if not Favorite.objects.filter(user=user_profile, post__slug=post_slug).exists():
+            validated_data['post'] = Post.objects.get(slug=post_slug)
+        else:
+            raise serializers.ValidationError({'post_slug': 'Już dodano ten post do ulubionych.'})
+        return super(FavoriteSerializer, self).create(validated_data)
+
+
+class CommentSerializer(serializers.ModelSerializer):
+    author = UserProfileSerializer(read_only=True)
+    post = serializers.SlugRelatedField(queryset=Post.objects.all(), slug_field='slug')
+    parent = serializers.PrimaryKeyRelatedField(queryset=Comment.objects.all(), required=False, allow_null=True)
+
+    class Meta:
+        model = Comment
+        fields = ('id', 'author', 'post', 'parent', 'rate', 'text', 'create_date')
+        read_only_fields = ('id', 'rate', 'create_date')
