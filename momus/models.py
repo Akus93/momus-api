@@ -94,8 +94,6 @@ class Notification(models.Model):
         (TO_MAIN, 'TO_MAIN')
     )
     user = models.ForeignKey(UserProfile, verbose_name='Odbiorca')
-    title = models.CharField(verbose_name='Tytuł', max_length=128)
-    text = models.CharField(verbose_name='Tekst', max_length=255)
     type = models.CharField(verbose_name='Typ', choices=NOTIFICATION_TYPES, max_length=16)
     data = models.CharField(verbose_name='Dane', max_length=64, blank=True, null=True)
     is_read = models.BooleanField(verbose_name='Czy odczytane', default=False)

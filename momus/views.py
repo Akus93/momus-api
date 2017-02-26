@@ -1,6 +1,5 @@
 from django.db.models import Q
 from rest_framework.views import Response, status
-from rest_framework.generics import ListAPIView, UpdateAPIView
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
@@ -8,8 +7,9 @@ from django_filters.rest_framework import DjangoFilterBackend
 from momus.permissions import IsOwnerOrReadOnlyForPost, IsOwnerOrReadOnlyForUserProfile, IsOwnerForFavorite,\
                               IsOwnerOrReadOnlyForComment, IsAdminOrCreateOnly
 from momus.serializers import UserProfileSerializer, PostSerializer, FavoriteSerializer, CommentSerializer,\
-                              MessageSerializer, ReportedPostSerializer, ReportedCommentSerializer
-from momus.models import UserProfile, Post, Favorite, Comment, Message, ReportedPost, ReportedComment
+                              MessageSerializer, ReportedPostSerializer, ReportedCommentSerializer,\
+                              NotificationSerializer
+from momus.models import UserProfile, Post, Favorite, Comment, Message, ReportedPost, ReportedComment, Notification
 from momus.filters import PostFilterSet, CommentFilterSet, UserProfileFilter
 from momus.throttles import UserProfileThrottle, PostThrottle, FavoriteThrottle, MessageThrottle, CommentThrottle,\
                             ReportedPostThrottle, ReportedCommentThrottle
@@ -137,3 +137,12 @@ class ReportedCommentViewSet(ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user.userprofile)
+
+
+class NotificationViewSet(ModelViewSet):
+    serializer_class = NotificationSerializer
+    permission_classes = (IsAuthenticated, )
+    http_method_names = ('get', 'options')
+
+    def get_queryset(self):
+        return Notification.objects.filter(user__user=self.request.user)

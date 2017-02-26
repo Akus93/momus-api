@@ -7,7 +7,7 @@ from django.utils.text import slugify
 
 from rest_framework import serializers
 
-from momus.models import UserProfile, Post, Favorite, Comment, Message, ReportedPost, ReportedComment
+from momus.models import UserProfile, Post, Favorite, Comment, Message, ReportedPost, ReportedComment, Notification
 
 
 class ImageBase64Field(serializers.ImageField):
@@ -156,3 +156,11 @@ class ReportedCommentSerializer(serializers.ModelSerializer):
         model = ReportedComment
         fields = ('author', 'comment', 'text', 'is_pending', 'create_date')
         read_only_fields = ('author', 'is_pending', 'create_date')
+
+
+class NotificationSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Notification
+        fields = ('title', 'text', 'type', 'data', 'create_date')
+        read_only_fields = ('title', 'text', 'type', 'data', 'create_date')
