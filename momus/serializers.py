@@ -7,7 +7,7 @@ from django.utils.text import slugify
 
 from rest_framework import serializers
 
-from momus.models import UserProfile, Post, Favorite, Comment
+from momus.models import UserProfile, Post, Favorite, Comment, Message
 
 
 class ImageBase64Field(serializers.ImageField):
@@ -111,3 +111,28 @@ class CommentSerializer(serializers.ModelSerializer):
         model = Comment
         fields = ('id', 'author', 'post', 'parent', 'rate', 'text', 'create_date')
         read_only_fields = ('id', 'rate', 'create_date')
+
+
+class MessageSerializer(serializers.ModelSerializer):
+    sender = serializers.CharField(read_only=True)
+    reciver = serializers.CharField(read_only=True)
+    to = serializers.CharField(source='reciver__username', write_only=True)
+
+    class Meta:
+        model = Message
+        fields = ('id', 'sender', 'reciver', 'to', 'title', 'text', 'create_date')
+        read_only_fields = ('create_date', )
+
+    def create(self, validated_data):
+        reciver_username = validated_data.pop('reciver__username')
+        try:
+            reciver = UserProfile.objects.get(user__username=reciver_username)
+        except UserProfile.DoesNotExist:
+            raise serializers.ValidationError({'to': 'Nie ma takiego użytkownika.'})
+        validated_data['reciver'] = reciver
+        return super(MessageSerializer, self).create(validated_data)
+
+    def update(self, instance, validated_data):
+        instance.is_read = True
+        instance.save()
+        return instance

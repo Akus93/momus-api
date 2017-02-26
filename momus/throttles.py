@@ -33,3 +33,13 @@ class FavoriteThrottle(UserRateThrottle):
             return True
         return super(FavoriteThrottle, self).allow_request(request, view)
 
+
+class MessageThrottle(UserRateThrottle):
+
+    rate = '100/h'
+    scope = 'message'
+
+    def allow_request(self, request, view):
+        if request.method in ('GET', 'HEAD', 'OPTIONS'):
+            return True
+        return super(MessageThrottle, self).allow_request(request, view)

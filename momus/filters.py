@@ -1,7 +1,7 @@
 from django_filters.rest_framework import FilterSet, Filter
-from django_filters import CharFilter
+from django_filters import CharFilter, BooleanFilter
 
-from momus.models import Post, Comment, UserProfile
+from momus.models import Post, Comment, UserProfile, Message
 
 
 class ListFilter(Filter):
@@ -47,3 +47,4 @@ class CommentFilterSet(FilterSet):
     class Meta:
         model = Comment
         fields = ('author', 'post')
+

@@ -1,16 +1,17 @@
-from django.contrib.auth.models import User
-from rest_framework.views import APIView, Response, status
-from rest_framework.generics import RetrieveAPIView
-from rest_framework.viewsets import ReadOnlyModelViewSet, ModelViewSet
+from django.db.models import Q
+from rest_framework.views import Response, status
+from rest_framework.generics import ListAPIView, UpdateAPIView
+from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
 
 from momus.permissions import IsOwnerOrReadOnlyForPost, IsOwnerOrReadOnlyForUserProfile, IsOwnerForFavorite,\
                               IsOwnerOrReadOnlyForComment
-from momus.serializers import UserProfileSerializer, PostSerializer, FavoriteSerializer, CommentSerializer
-from momus.models import UserProfile, Post, Favorite, Comment
+from momus.serializers import UserProfileSerializer, PostSerializer, FavoriteSerializer, CommentSerializer,\
+                              MessageSerializer
+from momus.models import UserProfile, Post, Favorite, Comment, Message
 from momus.filters import PostFilterSet, CommentFilterSet, UserProfileFilter
-from momus.throttles import UserProfileThrottle, PostThrottle, FavoriteThrottle
+from momus.throttles import UserProfileThrottle, PostThrottle, FavoriteThrottle, MessageThrottle
 from momus.paginations import LargeResultsSetPagination, StandardResultsSetPagination
 
 
@@ -67,3 +68,49 @@ class CommentViewSet(ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user.userprofile)
+
+
+class MessageViewSet(ModelViewSet):
+    serializer_class = MessageSerializer
+    permission_classes = (IsAuthenticated, )
+    http_method_names = ('get', 'options', 'post', 'head')
+    throttle_classes = (MessageThrottle, )
+    lookup_field = 'username'
+    lookup_value_regex = '[\w.]+'
+
+    def get_queryset(self):
+        return Message.objects.filter(Q(sender__user=self.request.user) |
+                                      Q(reciver__user=self.request.user)).select_related('sender', 'reciver')
+
+    def perform_create(self, serializer):
+        serializer.save(sender=self.request.user.userprofile)
+
+    def list(self, request, *args, **kwargs):
+        """Lista osób z którymi prowadzono konwersajcę"""
+        current_user = request.user.userprofile
+        users = UserProfile.objects.filter(Q(sender__reciver=current_user) | Q(reciver__sender=current_user))\
+                                   .select_related('user').distinct().order_by('user__first_name')
+        return Response(UserProfileSerializer(users, many=True).data)
+
+    def retrieve(self, request, *args, **kwargs):
+        """Lista wiadomości z konkretnym użytkownikiem"""
+        username = self.kwargs[self.lookup_field]
+        current_user = request.user.userprofile
+        try:
+            other_user = UserProfile.objects.select_related('user').get(user__username=username)
+        except UserProfile.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        messages = Message.objects.filter(Q(sender=current_user) | Q(reciver=current_user),
+                                          Q(sender=other_user) | Q(reciver=other_user))
+        return Response(MessageSerializer(messages, many=True).data)
+
+
+class UnreadMessagesViewSet(ModelViewSet):
+    serializer_class = MessageSerializer
+    permission_classes = (IsAuthenticated, )
+    http_method_names = ('get', 'patch')
+
+    def get_queryset(self):
+        return Message.objects.filter(reciver__user=self.request.user, is_read=False).select_related('reciver__user',
+                                                                                                     'sender__user')
+

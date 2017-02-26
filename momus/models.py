@@ -11,7 +11,7 @@ class UserProfile(models.Model):
     birth_date = models.DateField(verbose_name='Data urodzenia', null=True, blank=True)
 
     def __str__(self):
-        return self.user.get_full_name() or self.user.username
+        return self.user.username
 
     class Meta:
         verbose_name = 'Profil użytkownika'
