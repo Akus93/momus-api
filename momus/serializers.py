@@ -7,7 +7,7 @@ from django.utils.text import slugify
 
 from rest_framework import serializers
 
-from momus.models import UserProfile, Post, Favorite, Comment, Message
+from momus.models import UserProfile, Post, Favorite, Comment, Message, ReportedPost, ReportedComment
 
 
 class ImageBase64Field(serializers.ImageField):
@@ -129,6 +129,8 @@ class MessageSerializer(serializers.ModelSerializer):
             reciver = UserProfile.objects.get(user__username=reciver_username)
         except UserProfile.DoesNotExist:
             raise serializers.ValidationError({'to': 'Nie ma takiego użytkownika.'})
+        if reciver == validated_data['sender']:
+            raise serializers.ValidationError({'to': 'Nie można wysłać wiadomości do siebie.'})
         validated_data['reciver'] = reciver
         return super(MessageSerializer, self).create(validated_data)
 
@@ -136,3 +138,21 @@ class MessageSerializer(serializers.ModelSerializer):
         instance.is_read = True
         instance.save()
         return instance
+
+
+class ReportedPostSerializer(serializers.ModelSerializer):
+    post = serializers.SlugRelatedField(queryset=Post.objects.all(), slug_field='slug')
+
+    class Meta:
+        model = ReportedPost
+        fields = ('author', 'post', 'text', 'is_pending', 'create_date')
+        read_only_fields = ('author', 'is_pending', 'create_date')
+
+
+class ReportedCommentSerializer(serializers.ModelSerializer):
+    comment = serializers.PrimaryKeyRelatedField(queryset=Comment.objects.all())
+
+    class Meta:
+        model = ReportedComment
+        fields = ('author', 'comment', 'text', 'is_pending', 'create_date')
+        read_only_fields = ('author', 'is_pending', 'create_date')

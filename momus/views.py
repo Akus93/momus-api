@@ -6,12 +6,13 @@ from rest_framework.permissions import IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
 
 from momus.permissions import IsOwnerOrReadOnlyForPost, IsOwnerOrReadOnlyForUserProfile, IsOwnerForFavorite,\
-                              IsOwnerOrReadOnlyForComment
+                              IsOwnerOrReadOnlyForComment, IsAdminOrCreateOnly
 from momus.serializers import UserProfileSerializer, PostSerializer, FavoriteSerializer, CommentSerializer,\
-                              MessageSerializer
-from momus.models import UserProfile, Post, Favorite, Comment, Message
+                              MessageSerializer, ReportedPostSerializer, ReportedCommentSerializer
+from momus.models import UserProfile, Post, Favorite, Comment, Message, ReportedPost, ReportedComment
 from momus.filters import PostFilterSet, CommentFilterSet, UserProfileFilter
-from momus.throttles import UserProfileThrottle, PostThrottle, FavoriteThrottle, MessageThrottle
+from momus.throttles import UserProfileThrottle, PostThrottle, FavoriteThrottle, MessageThrottle, CommentThrottle,\
+                            ReportedPostThrottle, ReportedCommentThrottle
 from momus.paginations import LargeResultsSetPagination, StandardResultsSetPagination
 
 
@@ -62,6 +63,7 @@ class CommentViewSet(ModelViewSet):
     queryset = Comment.objects.filter(is_active=True)
     permission_classes = (IsOwnerOrReadOnlyForComment, )
     serializer_class = CommentSerializer
+    throttle_classes = (CommentThrottle, )
     http_method_names = ('get', 'options', 'post', 'delete', 'head')
     filter_backends = (DjangoFilterBackend, )
     filter_class = CommentFilterSet
@@ -108,9 +110,30 @@ class MessageViewSet(ModelViewSet):
 class UnreadMessagesViewSet(ModelViewSet):
     serializer_class = MessageSerializer
     permission_classes = (IsAuthenticated, )
-    http_method_names = ('get', 'patch')
+    http_method_names = ('get', 'options', 'patch')
 
     def get_queryset(self):
         return Message.objects.filter(reciver__user=self.request.user, is_read=False).select_related('reciver__user',
                                                                                                      'sender__user')
 
+
+class ReportedPostViewSet(ModelViewSet):
+    queryset = ReportedPost.objects.all()
+    serializer_class = ReportedPostSerializer
+    permission_classes = (IsAdminOrCreateOnly, )
+    http_method_names = ('get', 'options', 'post')
+    throttle_classes = (ReportedPostThrottle, )
+
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user.userprofile)
+
+
+class ReportedCommentViewSet(ModelViewSet):
+    queryset = ReportedComment.objects.all()
+    serializer_class = ReportedCommentSerializer
+    permission_classes = (IsAdminOrCreateOnly, )
+    http_method_names = ('get', 'options', 'post')
+    throttle_classes = (ReportedCommentThrottle, )
+
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user.userprofile)

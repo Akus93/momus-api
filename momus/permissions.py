@@ -36,3 +36,13 @@ class IsOwnerOrReadOnlyForComment(BasePermission):
 
     def has_permission(self, request, view):
         return request.method in SAFE_METHODS or request.user and is_authenticated(request.user)
+
+
+class IsAdminOrCreateOnly(BasePermission):
+
+    def has_object_permission(self, request, view, obj):
+        return request.user and request.user.is_staff or request.method == 'POST'
+
+    def has_permission(self, request, view):
+        return request.user and (is_authenticated(request.user) and request.method in ('POST', 'OPTIONS') or
+                                 request.user.is_staff)
