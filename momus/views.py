@@ -1,5 +1,5 @@
 from django.db.models import Q
-from rest_framework.views import Response, status
+from rest_framework.views import Response, status, APIView
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
@@ -27,6 +27,16 @@ class UserProfileViewSet(ModelViewSet):
     filter_backends = (DjangoFilterBackend, )
     filter_class = UserProfileFilter
     pagination_class = LargeResultsSetPagination
+
+
+class RetrieveCurrentUserProfile(APIView):
+    serializer_class = UserProfileSerializer
+    permission_classes = (IsAuthenticated, )
+
+    def get(self, request):
+        current_user = UserProfile.objects.select_related('user').get(user=request.user)
+        serializer = self.serializer_class(current_user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class PostViewSet(ModelViewSet):

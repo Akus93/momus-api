@@ -3,7 +3,8 @@ from django.conf.urls import url, include
 from rest_framework.routers import DefaultRouter
 
 from momus.views import UserProfileViewSet, PostViewSet, FavoriteViewSet, CommentViewSet, MessageViewSet,\
-                        UnreadMessagesViewSet, ReportedPostViewSet, ReportedCommentViewSet, NotificationViewSet
+                        UnreadMessagesViewSet, ReportedPostViewSet, ReportedCommentViewSet, NotificationViewSet,\
+                        RetrieveCurrentUserProfile
 
 
 router = DefaultRouter()
@@ -18,5 +19,6 @@ router.register(r'reported-comment', ReportedCommentViewSet)
 router.register(r'notifications', NotificationViewSet, 'Notification')
 
 urlpatterns = [
+    url(r'^users/my-profile/$', RetrieveCurrentUserProfile.as_view()),
     url(r'^', include(router.urls)),
 ]
