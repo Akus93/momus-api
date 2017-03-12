@@ -40,7 +40,7 @@ class RetrieveCurrentUserProfile(APIView):
 
 
 class PostViewSet(ModelViewSet):
-    queryset = Post.objects.filter(is_pending=False).select_related('author')
+    queryset = Post.objects.select_related('author')
     serializer_class = PostSerializer
     permission_classes = (IsOwnerOrReadOnlyForPost, )
     throttle_classes = (PostThrottle, )
